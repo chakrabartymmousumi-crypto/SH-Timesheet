@@ -6,25 +6,51 @@
 <title>SH Timesheet</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#F0F5FC;color:#0F172A;min-height:100vh}
+
+/* ── Auth Screen ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1F4E78,#2563EB)}
+.auth-box{background:#fff;border-radius:16px;padding:40px;width:min(420px,95vw);box-shadow:0 24px 64px rgba(0,0,0,.2)}
+.auth-logo{text-align:center;margin-bottom:24px}
+.auth-logo div{font-size:1.4rem;font-weight:700;color:#1F4E78;margin-top:8px}
+.auth-logo span{font-size:.85rem;color:#64748B}
+.auth-tabs{display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:24px}
+.auth-tab{flex:1;text-align:center;padding:10px;font-size:.88rem;font-weight:600;color:#64748B;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+.auth-tab.active{color:#2563EB;border-bottom-color:#2563EB}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-form.hidden{display:none}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:.75rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px}
+.fg input{border:1.5px solid #CBD5E1;border-radius:8px;padding:10px 12px;font-size:.9rem;color:#0F172A;transition:border-color .15s}
+.fg input:focus{outline:none;border-color:#2563EB;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:8px;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .15s;width:100%}
+.btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
+.btn-google{background:#fff;color:#0F172A;border:1.5px solid #CBD5E1}.btn-google:hover{background:#F8FAFC}
+.btn-google img{width:18px;height:18px}
+.divider{display:flex;align-items:center;gap:10px;color:#94A3B8;font-size:.8rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.auth-err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;border-radius:7px;padding:8px 12px;font-size:.82rem;display:none}
+.auth-err.show{display:block}
+
+/* ── App ── */
+.app{display:none}
 .topbar{background:#1F4E78;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;position:sticky;top:0;z-index:100}
 .brand{font-size:1.1rem;font-weight:600;color:#fff}
 .topbar-r{display:flex;gap:8px;align-items:center}
-.sync{display:flex;align-items:center;gap:6px;font-size:.75rem;color:rgba(255,255,255,.85);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.25)}
-.dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite}
+.user-badge{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border-radius:20px;padding:4px 12px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:#3B82F6;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff}
+.user-name{font-size:.78rem;color:rgba(255,255,255,.9);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync{display:flex;align-items:center;gap:5px;font-size:.74rem;color:rgba(255,255,255,.8);padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.2)}
+.dot{width:6px;height:6px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite}
 .dot.off{background:#F87171;animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none}
-.btn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
-.btn-blue{background:#2563EB;color:#fff}
-.btn-green{background:#16A34A;color:#fff}
-.btn-red{background:#DC2626;color:#fff}
-.btn-gray{background:#E2E8F0;color:#0F172A}
-.btn-sm{padding:5px 10px;font-size:.76rem}
+.tbtn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.tbtn:hover{background:rgba(255,255,255,.25)}
 .main{max-width:1400px;margin:0 auto;padding:24px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .stat{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 2px 12px rgba(30,58,138,.08);border-left:4px solid #ccc}
@@ -35,16 +61,24 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#F0F5FC;color:#0F172A
 .panel{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(30,58,138,.08);overflow:hidden}
 .phdr{background:linear-gradient(135deg,#1F4E78,#2563EB);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
 .phdr h3{font-size:1rem;font-weight:600;color:#fff}
+.phdr-btns{display:flex;gap:8px}
+.abtn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:.78rem;font-weight:600;cursor:pointer;border:none}
+.abtn-green{background:#16A34A;color:#fff}.abtn-green:hover{background:#166534}
+.abtn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}.abtn-white:hover{background:rgba(255,255,255,.25)}
 .form-area{padding:20px;border-bottom:1px solid #E2E8F0;background:#EFF6FF;display:none}
 .fg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.fg{display:flex;flex-direction:column;gap:3px}
-.fg.wide{grid-column:span 2}
-.fg label{font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase}
+.fg2{display:flex;flex-direction:column;gap:3px}
+.fg2.wide{grid-column:span 2}
+.fg2 label{font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase}
 .r{color:#DC2626}
-.fg input,.fg select,.fg textarea{border:1.5px solid #CBD5E1;border-radius:6px;padding:8px 10px;font-size:.85rem;color:#0F172A;background:#fff}
-.fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#2563EB}
-.fg textarea{resize:vertical;min-height:56px}
+.fg2 input,.fg2 select,.fg2 textarea{border:1.5px solid #CBD5E1;border-radius:6px;padding:8px 10px;font-size:.85rem;color:#0F172A;background:#fff}
+.fg2 input:focus,.fg2 select:focus,.fg2 textarea:focus{outline:none;border-color:#2563EB}
+.fg2 textarea{resize:vertical;min-height:56px}
 .form-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
+.fbtn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none}
+.fbtn-blue{background:#2563EB;color:#fff}
+.fbtn-gray{background:#E2E8F0;color:#0F172A}
+.fbtn-red{background:#DC2626;color:#fff}
 .fbar{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid #F1F5F9;flex-wrap:wrap}
 .fbar input,.fbar select{border:1.5px solid #CBD5E1;border-radius:6px;padding:6px 10px;font-size:.82rem;background:#fff;color:#0F172A}
 .fbar input{flex:1;min-width:150px}
@@ -54,74 +88,132 @@ th{padding:9px 12px;text-align:left;font-size:.67rem;font-weight:700;color:#6474
 td{padding:9px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
 tr:hover td{background:#EFF6FF}
 .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
-.bp{background:#FEF3C7;color:#92400E}
-.bi{background:#EDE9FE;color:#5B21B6}
-.bc{background:#DCFCE7;color:#166534}
+.bp{background:#FEF3C7;color:#92400E}.bi{background:#EDE9FE;color:#5B21B6}.bc{background:#DCFCE7;color:#166534}
 .act{display:flex;gap:4px}
 .empty{padding:48px 24px;text-align:center;color:#94A3B8;font-size:.88rem}
 .toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999}
 .toast{padding:10px 16px;border-radius:8px;font-size:.82rem;color:#fff;background:#0F172A;pointer-events:none}
-.toast.ok{background:#166534}
-.toast.err{background:#991B1B}
-@media(max-width:640px){.stats{grid-template-columns:1fr 1fr}.fg.wide{grid-column:span 1}}
+.toast.ok{background:#166534}.toast.err{background:#991B1B}
+@media(max-width:640px){.stats{grid-template-columns:1fr 1fr}.fg2.wide{grid-column:span 1}}
 </style>
 </head>
 <body>
-<div class="topbar">
-  <div class="brand">&#128197; SH Timesheet</div>
-  <div class="topbar-r">
-    <div class="sync"><div class="dot off" id="dot"></div><span id="syncTxt">Connecting...</span></div>
-    <button class="btn btn-white btn-sm" onclick="exportExcel()">&#11015; Export</button>
+
+<!-- ── LOGIN SCREEN ── -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div>&#128197; SH Timesheet</div>
+      <span>Sign in to access your timesheet</span>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <!-- Sign In Form -->
+    <div class="auth-form" id="loginForm">
+      <div class="auth-err" id="loginErr"></div>
+      <button class="btn btn-google" onclick="signInGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div class="divider">or use email</div>
+      <div class="fg"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="loginPass" placeholder="Your password"/></div>
+      <button class="btn btn-blue" onclick="signInEmail()">Sign In</button>
+    </div>
+
+    <!-- Register Form -->
+    <div class="auth-form hidden" id="registerForm">
+      <div class="auth-err" id="registerErr"></div>
+      <button class="btn btn-google" onclick="signInGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+      <div class="divider">or use email</div>
+      <div class="fg"><label>Full Name</label><input type="text" id="regName" placeholder="Your full name"/></div>
+      <div class="fg"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com"/></div>
+      <div class="fg"><label>Password</label><input type="password" id="regPass" placeholder="Min 6 characters"/></div>
+      <button class="btn btn-blue" onclick="registerEmail()">Create Account</button>
+    </div>
   </div>
 </div>
-<div class="main">
-  <div class="stats">
-    <div class="stat s1"><div class="stat-lbl">Total Hours</div><div class="stat-val" id="sHours">0.0</div><div class="stat-sub">this month</div></div>
-    <div class="stat s2"><div class="stat-lbl">Pending</div><div class="stat-val" id="sPending">0</div><div class="stat-sub">tasks</div></div>
-    <div class="stat s3"><div class="stat-lbl">In Progress</div><div class="stat-val" id="sProgress">0</div><div class="stat-sub">tasks</div></div>
-    <div class="stat s4"><div class="stat-lbl">Completed</div><div class="stat-val" id="sDone">0</div><div class="stat-sub">tasks</div></div>
-  </div>
-  <div class="panel">
-    <div class="phdr">
-      <h3>&#128203; Monthly Time Sheet</h3>
-      <button class="btn btn-green btn-sm" onclick="showForm()">+ Add Entry</button>
+
+<!-- ── MAIN APP ── -->
+<div class="app" id="appWrap">
+  <div class="topbar">
+    <div class="brand">&#128197; SH Timesheet</div>
+    <div class="topbar-r">
+      <div class="sync"><div class="dot off" id="dot"></div><span id="syncTxt">Connecting...</span></div>
+      <div class="user-badge">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-name" id="userName">...</div>
+      </div>
+      <button class="tbtn" onclick="exportExcel()">&#11015; Export</button>
+      <button class="tbtn" onclick="signOut()">&#128274; Sign Out</button>
     </div>
-    <div class="form-area" id="formArea">
-      <div class="fg-grid">
-        <div class="fg"><label>Date <span class="r">*</span></label><input type="date" id="fDate"/></div>
-        <div class="fg"><label>Employee Name <span class="r">*</span></label><input type="text" id="fName" placeholder="Full name"/></div>
-        <div class="fg"><label>Employee No. <span class="r">*</span></label><input type="text" id="fEmpNo" placeholder="SH-2101"/></div>
-        <div class="fg"><label>Project No. <span class="r">*</span></label><input type="text" id="fProject" placeholder="26XXX"/></div>
-        <div class="fg wide"><label>Description <span class="r">*</span></label><textarea id="fDesc" rows="2" placeholder="Brief description of work done"></textarea></div>
-        <div class="fg"><label>Hours Spent <span class="r">*</span></label><input type="number" id="fHours" placeholder="2.5" step="0.25" min="0"/></div>
-        <div class="fg"><label>Task Allocated By <span class="r">*</span></label><input type="text" id="fAllocBy" placeholder="Manager name"/></div>
-        <div class="fg"><label>Task Status <span class="r">*</span></label>
-          <select id="fStatus"><option value="">-- Select --</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat s1"><div class="stat-lbl">Total Hours</div><div class="stat-val" id="sHours">0.0</div><div class="stat-sub">this month</div></div>
+      <div class="stat s2"><div class="stat-lbl">Pending</div><div class="stat-val" id="sPending">0</div><div class="stat-sub">tasks</div></div>
+      <div class="stat s3"><div class="stat-lbl">In Progress</div><div class="stat-val" id="sProgress">0</div><div class="stat-sub">tasks</div></div>
+      <div class="stat s4"><div class="stat-lbl">Completed</div><div class="stat-val" id="sDone">0</div><div class="stat-sub">tasks</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="phdr">
+        <h3>&#128203; Monthly Time Sheet</h3>
+        <div class="phdr-btns">
+          <button class="abtn abtn-green" onclick="showForm()">+ Add Entry</button>
         </div>
-        <div class="fg"><label>Remarks</label><input type="text" id="fRemarks" placeholder="Optional"/></div>
-        <div class="fg"><label>Verified By</label><input type="text" id="fVerifiedBy" placeholder="Optional"/></div>
       </div>
-      <div class="form-btns">
-        <button class="btn btn-gray btn-sm" onclick="cancelForm()">Cancel</button>
-        <button class="btn btn-blue btn-sm" id="saveBtn" onclick="saveEntry()">Save Entry</button>
+
+      <div class="form-area" id="formArea">
+        <div class="fg-grid">
+          <div class="fg2"><label>Date <span class="r">*</span></label><input type="date" id="fDate"/></div>
+          <div class="fg2"><label>Employee Name <span class="r">*</span></label><input type="text" id="fName" placeholder="Full name"/></div>
+          <div class="fg2"><label>Employee No. <span class="r">*</span></label><input type="text" id="fEmpNo" placeholder="SH-2101"/></div>
+          <div class="fg2"><label>Project No. <span class="r">*</span></label><input type="text" id="fProject" placeholder="26XXX"/></div>
+          <div class="fg2 wide"><label>Description <span class="r">*</span></label><textarea id="fDesc" rows="2" placeholder="Brief description of work done"></textarea></div>
+          <div class="fg2"><label>Hours Spent <span class="r">*</span></label><input type="number" id="fHours" placeholder="2.5" step="0.25" min="0"/></div>
+          <div class="fg2"><label>Task Allocated By <span class="r">*</span></label><input type="text" id="fAllocBy" placeholder="Manager name"/></div>
+          <div class="fg2"><label>Task Status <span class="r">*</span></label>
+            <select id="fStatus"><option value="">-- Select --</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
+          </div>
+          <div class="fg2"><label>Remarks</label><input type="text" id="fRemarks" placeholder="Optional"/></div>
+          <div class="fg2"><label>Verified By</label><input type="text" id="fVerifiedBy" placeholder="Optional"/></div>
+        </div>
+        <div class="form-btns">
+          <button class="fbtn fbtn-gray" onclick="cancelForm()">Cancel</button>
+          <button class="fbtn fbtn-blue" id="saveBtn" onclick="saveEntry()">Save Entry</button>
+        </div>
       </div>
-    </div>
-    <div class="fbar">
-      <input type="text" id="search" placeholder="&#128269; Search name, project, description..." oninput="render()"/>
-      <select id="fltStatus" onchange="render()"><option value="">All Statuses</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
-      <select id="fltMonth" onchange="render()"><option value="">All Months</option></select>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Emp No.</th><th>Project</th><th>Description</th><th>Hrs</th><th>Allocated By</th><th>Status</th><th>Remarks</th><th>Verified By</th><th>Actions</th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div class="empty" id="empty">No entries yet. Click <strong>+ Add Entry</strong> to get started.</div>
+
+      <div class="fbar">
+        <input type="text" id="search" placeholder="&#128269; Search name, project, description..." oninput="render()"/>
+        <select id="fltStatus" onchange="render()"><option value="">All Statuses</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
+        <select id="fltMonth" onchange="render()"><option value="">All Months</option></select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Emp No.</th><th>Project</th><th>Description</th><th>Hrs</th><th>Allocated By</th><th>Status</th><th>Remarks</th><th>Verified By</th><th>Added By</th><th>Actions</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty" id="empty">No entries yet. Click <strong>+ Add Entry</strong> to get started.</div>
+      </div>
     </div>
   </div>
 </div>
+
 <div class="toasts" id="toasts"></div>
+
 <script>
+// ── Firebase init ──
 firebase.initializeApp({
   apiKey:'AIzaSyCfmRxMz5pQptUrCWLE5EWVc2GTfbCmyZA',
   authDomain:'sh-timesheet.firebaseapp.com',
@@ -132,146 +224,232 @@ firebase.initializeApp({
   appId:'1:400254422937:web:625904091041a2e2a90d08'
 });
 
-var db = firebase.database();
+var auth = firebase.auth();
+var db   = firebase.database();
 var entries = [];
-var editId = null;
+var editId  = null;
+var currentUser = null;
 
-// Connect to Realtime Database
-db.ref('timesheet').on('value', function(snap){
-  var data = snap.val();
-  entries = data ? Object.keys(data).map(function(k){return Object.assign({id:k},data[k]);}) : [];
-  entries.sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0);});
-  render();
-  updateStats();
-  document.getElementById('dot').className='dot';
-  document.getElementById('syncTxt').textContent='Firebase live';
-}, function(err){
-  document.getElementById('dot').className='dot off';
-  document.getElementById('syncTxt').textContent='Error: '+err.code;
-  toast(err.message,'err');
+// ── Auth state ──
+auth.onAuthStateChanged(function(user){
+  if(user){
+    currentUser = user;
+    document.getElementById('authWrap').style.display = 'none';
+    document.getElementById('appWrap').style.display  = 'block';
+    var name = user.displayName || user.email.split('@')[0];
+    document.getElementById('userName').textContent   = name;
+    document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+    loadData();
+  } else {
+    currentUser = null;
+    document.getElementById('authWrap').style.display = 'flex';
+    document.getElementById('appWrap').style.display  = 'none';
+  }
 });
 
-function showForm(){
-  editId=null;clearForm();
-  document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
-  document.getElementById('formArea').style.display='block';
-  document.getElementById('saveBtn').textContent='Save Entry';
+// ── Tab switch ──
+function switchTab(tab){
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+  document.getElementById('tabLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegister').classList.toggle('active', tab==='register');
 }
-function cancelForm(){document.getElementById('formArea').style.display='none';editId=null;}
-function clearForm(){['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus','fRemarks','fVerifiedBy'].forEach(function(id){document.getElementById(id).value='';});}
+
+// ── Google Sign In ──
+function signInGoogle(){
+  var provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(function(e){ showErr('loginErr', e.message); });
+}
+
+// ── Email Sign In ──
+function signInEmail(){
+  var email = document.getElementById('loginEmail').value.trim();
+  var pass  = document.getElementById('loginPass').value;
+  if(!email||!pass){ showErr('loginErr','Please enter email and password.'); return; }
+  auth.signInWithEmailAndPassword(email, pass)
+    .catch(function(e){ showErr('loginErr', friendlyErr(e.code)); });
+}
+
+// ── Email Register ──
+function registerEmail(){
+  var name  = document.getElementById('regName').value.trim();
+  var email = document.getElementById('regEmail').value.trim();
+  var pass  = document.getElementById('regPass').value;
+  if(!name||!email||!pass){ showErr('registerErr','Please fill all fields.'); return; }
+  if(pass.length<6){ showErr('registerErr','Password must be at least 6 characters.'); return; }
+  auth.createUserWithEmailAndPassword(email, pass)
+    .then(function(cred){ return cred.user.updateProfile({displayName: name}); })
+    .catch(function(e){ showErr('registerErr', friendlyErr(e.code)); });
+}
+
+// ── Sign Out ──
+function signOut(){
+  if(confirm('Sign out?')) auth.signOut();
+}
+
+function showErr(id, msg){
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function friendlyErr(code){
+  var msgs = {
+    'auth/user-not-found':'No account found with this email.',
+    'auth/wrong-password':'Incorrect password. Try again.',
+    'auth/email-already-in-use':'This email is already registered. Please sign in.',
+    'auth/invalid-email':'Please enter a valid email address.',
+    'auth/weak-password':'Password must be at least 6 characters.',
+    'auth/popup-closed-by-user':'Google sign-in was cancelled.',
+    'auth/network-request-failed':'Network error. Check your connection.'
+  };
+  return msgs[code] || 'Something went wrong. Please try again.';
+}
+
+// ── Load Data ──
+function loadData(){
+  db.ref('timesheet').on('value', function(snap){
+    var data = snap.val();
+    entries = data ? Object.keys(data).map(function(k){ return Object.assign({id:k}, data[k]); }) : [];
+    entries.sort(function(a,b){ return (a.createdAt||0)-(b.createdAt||0); });
+    render(); updateStats();
+    document.getElementById('dot').className = 'dot';
+    document.getElementById('syncTxt').textContent = 'Live';
+  }, function(err){
+    document.getElementById('dot').className = 'dot off';
+    document.getElementById('syncTxt').textContent = 'Error';
+    toast(err.message,'err');
+  });
+}
+
+// ── Form ──
+function showForm(){
+  editId = null; clearForm();
+  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  // Auto-fill name from logged in user
+  if(currentUser){
+    document.getElementById('fName').value = currentUser.displayName || currentUser.email.split('@')[0];
+  }
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('saveBtn').textContent = 'Save Entry';
+}
+function cancelForm(){ document.getElementById('formArea').style.display='none'; editId=null; }
+function clearForm(){ ['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus','fRemarks','fVerifiedBy'].forEach(function(id){ document.getElementById(id).value=''; }); }
 
 function saveEntry(){
-  var required=['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus'];
-  for(var i=0;i<required.length;i++){if(!document.getElementById(required[i]).value.trim()){toast('Please fill all required fields','err');return;}}
-  var entry={
-    date:document.getElementById('fDate').value,
-    name:document.getElementById('fName').value.trim(),
-    empNo:document.getElementById('fEmpNo').value.trim(),
-    project:document.getElementById('fProject').value.trim(),
-    desc:document.getElementById('fDesc').value.trim(),
-    hours:parseFloat(document.getElementById('fHours').value)||0,
-    allocBy:document.getElementById('fAllocBy').value.trim(),
-    status:document.getElementById('fStatus').value,
-    remarks:document.getElementById('fRemarks').value.trim(),
-    verifiedBy:document.getElementById('fVerifiedBy').value.trim(),
-    createdAt:editId?(entries.find(function(e){return e.id===editId;})||{}).createdAt||Date.now():Date.now(),
-    updatedAt:Date.now()
+  var required = ['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus'];
+  for(var i=0;i<required.length;i++){ if(!document.getElementById(required[i]).value.trim()){ toast('Please fill all required fields','err'); return; } }
+  var entry = {
+    date:       document.getElementById('fDate').value,
+    name:       document.getElementById('fName').value.trim(),
+    empNo:      document.getElementById('fEmpNo').value.trim(),
+    project:    document.getElementById('fProject').value.trim(),
+    desc:       document.getElementById('fDesc').value.trim(),
+    hours:      parseFloat(document.getElementById('fHours').value)||0,
+    allocBy:    document.getElementById('fAllocBy').value.trim(),
+    status:     document.getElementById('fStatus').value,
+    remarks:    document.getElementById('fRemarks').value.trim(),
+    verifiedBy: document.getElementById('fVerifiedBy').value.trim(),
+    addedBy:    currentUser ? (currentUser.displayName||currentUser.email) : 'Unknown',
+    addedByUid: currentUser ? currentUser.uid : '',
+    createdAt:  editId ? (entries.find(function(e){ return e.id===editId; })||{}).createdAt||Date.now() : Date.now(),
+    updatedAt:  Date.now()
   };
-  try{
-    if(editId){db.ref('timesheet/'+editId).set(entry);toast('Entry updated!','ok');}
-    else{db.ref('timesheet').push(entry);toast('Entry saved!','ok');}
-    cancelForm();
-  }catch(e){toast('Save failed: '+e.message,'err');}
+  if(editId){ db.ref('timesheet/'+editId).set(entry); toast('Entry updated!','ok'); }
+  else       { db.ref('timesheet').push(entry);         toast('Entry saved!','ok'); }
+  cancelForm();
 }
 
 function editEntry(id){
-  var e=entries.find(function(x){return x.id===id;});if(!e)return;
-  editId=id;
-  document.getElementById('fDate').value=e.date||'';
-  document.getElementById('fName').value=e.name||'';
-  document.getElementById('fEmpNo').value=e.empNo||'';
-  document.getElementById('fProject').value=e.project||'';
-  document.getElementById('fDesc').value=e.desc||'';
-  document.getElementById('fHours').value=e.hours||'';
-  document.getElementById('fAllocBy').value=e.allocBy||'';
-  document.getElementById('fStatus').value=e.status||'';
-  document.getElementById('fRemarks').value=e.remarks||'';
-  document.getElementById('fVerifiedBy').value=e.verifiedBy||'';
-  document.getElementById('formArea').style.display='block';
-  document.getElementById('saveBtn').textContent='Update Entry';
+  var e = entries.find(function(x){ return x.id===id; }); if(!e) return;
+  editId = id;
+  document.getElementById('fDate').value      = e.date||'';
+  document.getElementById('fName').value      = e.name||'';
+  document.getElementById('fEmpNo').value     = e.empNo||'';
+  document.getElementById('fProject').value   = e.project||'';
+  document.getElementById('fDesc').value      = e.desc||'';
+  document.getElementById('fHours').value     = e.hours||'';
+  document.getElementById('fAllocBy').value   = e.allocBy||'';
+  document.getElementById('fStatus').value    = e.status||'';
+  document.getElementById('fRemarks').value   = e.remarks||'';
+  document.getElementById('fVerifiedBy').value= e.verifiedBy||'';
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('saveBtn').textContent = 'Update Entry';
 }
 
 function deleteEntry(id){
-  if(!confirm('Delete this entry?'))return;
+  if(!confirm('Delete this entry?')) return;
   db.ref('timesheet/'+id).remove()
-    .then(function(){toast('Entry deleted','ok');})
-    .catch(function(e){toast('Delete failed: '+e.message,'err');});
+    .then(function(){ toast('Entry deleted','ok'); })
+    .catch(function(e){ toast('Delete failed: '+e.message,'err'); });
 }
 
+// ── Table ──
 function render(){
-  var q=document.getElementById('search').value.toLowerCase();
-  var st=document.getElementById('fltStatus').value;
-  var mo=document.getElementById('fltMonth').value;
-  var f=entries.filter(function(e){
-    return(!q||[e.name,e.project,e.desc,e.empNo].some(function(v){return(v||'').toLowerCase().includes(q);}))
-      &&(!st||e.status===st)&&(!mo||(e.date||'').startsWith(mo));
+  var q  = document.getElementById('search').value.toLowerCase();
+  var st = document.getElementById('fltStatus').value;
+  var mo = document.getElementById('fltMonth').value;
+  var f  = entries.filter(function(e){
+    return (!q||[e.name,e.project,e.desc,e.empNo].some(function(v){ return (v||'').toLowerCase().includes(q); }))
+      && (!st||e.status===st) && (!mo||(e.date||'').startsWith(mo));
   });
-  document.getElementById('empty').style.display=f.length?'none':'block';
-  document.getElementById('tbody').innerHTML=f.map(function(e,i){
-    var bc=e.status==='Completed'?'bc':e.status==='In Progress'?'bi':'bp';
-    return'<tr>'
+  document.getElementById('empty').style.display = f.length?'none':'block';
+  document.getElementById('tbody').innerHTML = f.map(function(e,i){
+    var bc = e.status==='Completed'?'bc':e.status==='In Progress'?'bi':'bp';
+    return '<tr>'
       +'<td style="color:#94A3B8;font-size:.72rem">'+(i+1)+'</td>'
       +'<td style="white-space:nowrap;font-size:.78rem">'+fmtDate(e.date)+'</td>'
       +'<td><strong>'+esc(e.name)+'</strong></td>'
       +'<td style="color:#2563EB;font-size:.78rem">'+esc(e.empNo)+'</td>'
       +'<td style="font-size:.78rem">'+esc(e.project)+'</td>'
-      +'<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(e.desc)+'">'+esc(e.desc)+'</td>'
+      +'<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(e.desc)+'">'+esc(e.desc)+'</td>'
       +'<td style="text-align:right;font-weight:700">'+((+e.hours||0).toFixed(2))+'</td>'
       +'<td>'+esc(e.allocBy)+'</td>'
       +'<td><span class="badge '+bc+'">'+esc(e.status)+'</span></td>'
       +'<td style="color:#64748B;font-size:.78rem">'+(esc(e.remarks)||'—')+'</td>'
       +'<td style="color:#64748B;font-size:.78rem">'+(esc(e.verifiedBy)||'—')+'</td>'
+      +'<td style="color:#64748B;font-size:.76rem">'+esc(e.addedBy||'—')+'</td>'
       +'<td><div class="act">'
-      +'<button class="btn btn-gray btn-sm" onclick="editEntry(\''+e.id+'\')">&#9998;</button>'
-      +'<button class="btn btn-red btn-sm" onclick="deleteEntry(\''+e.id+'\')">&#128465;</button>'
+      +'<button class="fbtn fbtn-gray" style="padding:4px 8px;font-size:.74rem" onclick="editEntry(\''+e.id+'\')">&#9998;</button>'
+      +'<button class="fbtn fbtn-red" style="padding:4px 8px;font-size:.74rem" onclick="deleteEntry(\''+e.id+'\')">&#128465;</button>'
       +'</div></td></tr>';
   }).join('');
 }
 
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function fmtDate(d){if(!d)return'';var p=d.split('-');var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return p[2]+'-'+(m[+p[1]-1]||'')+'-'+p[0];}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d){ if(!d)return''; var p=d.split('-'); var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return p[2]+'-'+(m[+p[1]-1]||'')+'-'+p[0]; }
 
 function updateStats(){
-  var total=entries.reduce(function(s,e){return s+(+e.hours||0);},0);
-  document.getElementById('sHours').textContent=total.toFixed(1);
-  document.getElementById('sPending').textContent=entries.filter(function(e){return e.status==='Pending';}).length;
-  document.getElementById('sProgress').textContent=entries.filter(function(e){return e.status==='In Progress';}).length;
-  document.getElementById('sDone').textContent=entries.filter(function(e){return e.status==='Completed';}).length;
-  var months=[...new Set(entries.map(function(e){return(e.date||'').slice(0,7);}).filter(Boolean))].sort().reverse();
-  var sel=document.getElementById('fltMonth');var cur=sel.value;
-  sel.innerHTML='<option value="">All Months</option>'+months.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
-  if(cur)sel.value=cur;
+  var total = entries.reduce(function(s,e){ return s+(+e.hours||0); },0);
+  document.getElementById('sHours').textContent    = total.toFixed(1);
+  document.getElementById('sPending').textContent  = entries.filter(function(e){ return e.status==='Pending'; }).length;
+  document.getElementById('sProgress').textContent = entries.filter(function(e){ return e.status==='In Progress'; }).length;
+  document.getElementById('sDone').textContent     = entries.filter(function(e){ return e.status==='Completed'; }).length;
+  var months = [...new Set(entries.map(function(e){ return (e.date||'').slice(0,7); }).filter(Boolean))].sort().reverse();
+  var sel = document.getElementById('fltMonth'); var cur = sel.value;
+  sel.innerHTML = '<option value="">All Months</option>'+months.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('');
+  if(cur) sel.value = cur;
 }
 
 function exportExcel(){
-  if(!entries.length){toast('No entries to export','err');return;}
-  var wb=XLSX.utils.book_new();
-  var data=[['Date','Employee Name','Employee No.','Project No.','Description','Hours','Allocated By','Status','Remarks','Verified By']]
-    .concat(entries.map(function(e){return[e.date,e.name,e.empNo,e.project,e.desc,e.hours,e.allocBy,e.status,e.remarks,e.verifiedBy];}));
-  var ws=XLSX.utils.aoa_to_sheet(data);
-  ws['!cols']=[12,22,14,16,36,8,20,14,24,16].map(function(w){return{wch:w};});
-  XLSX.utils.book_append_sheet(wb,ws,'Time Sheet');
-  var now=new Date();
-  XLSX.writeFile(wb,'SH_Timesheet_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'.xlsx');
+  if(!entries.length){ toast('No entries to export','err'); return; }
+  var wb = XLSX.utils.book_new();
+  var data = [['Date','Employee Name','Employee No.','Project No.','Description','Hours','Allocated By','Status','Remarks','Verified By','Added By']]
+    .concat(entries.map(function(e){ return [e.date,e.name,e.empNo,e.project,e.desc,e.hours,e.allocBy,e.status,e.remarks,e.verifiedBy,e.addedBy]; }));
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  ws['!cols'] = [12,22,14,16,36,8,20,14,24,16,20].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Time Sheet');
+  var now = new Date();
+  XLSX.writeFile(wb, 'SH_Timesheet_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'.xlsx');
   toast('Exported!','ok');
 }
 
 function toast(msg,type){
-  var el=document.createElement('div');
-  el.className='toast'+(type?' '+type:'');
-  el.textContent=msg;
+  var el = document.createElement('div');
+  el.className = 'toast'+(type?' '+type:'');
+  el.textContent = msg;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(function(){el.remove();},3000);
+  setTimeout(function(){ el.remove(); }, 3000);
 }
 </script>
 </body>
