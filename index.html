@@ -6,68 +6,70 @@
 <title>SH Timesheet</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',sans-serif;background:#F0F5FC;color:#0F172A;min-height:100vh}
 .topbar{background:#1F4E78;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;position:sticky;top:0;z-index:100}
-.topbar-brand{font-size:1.1rem;font-weight:600;color:#fff}
-.topbar-actions{display:flex;gap:8px}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:7px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
-.btn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
-.btn-white:hover{background:rgba(255,255,255,.25)}
-.btn-blue{background:#2563EB;color:#fff}.btn-blue:hover{background:#1D4ED8}
-.btn-green{background:#16A34A;color:#fff}.btn-green:hover{background:#166534}
-.btn-red{background:#DC2626;color:#fff}.btn-red:hover{background:#991B1B}
-.btn-sm{padding:5px 10px;font-size:.76rem}
-.sync{display:flex;align-items:center;gap:6px;font-size:.75rem;color:rgba(255,255,255,.8);padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.2)}
+.brand{font-size:1.1rem;font-weight:600;color:#fff}
+.topbar-r{display:flex;gap:8px;align-items:center}
+.sync{display:flex;align-items:center;gap:6px;font-size:.75rem;color:rgba(255,255,255,.85);padding:4px 12px;border-radius:20px;border:1px solid rgba(255,255,255,.25)}
 .dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;animation:pulse 2s infinite}
 .dot.off{background:#F87171;animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:7px;font-size:.82rem;font-weight:600;cursor:pointer;border:none}
+.btn-white{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-blue{background:#2563EB;color:#fff}
+.btn-green{background:#16A34A;color:#fff}
+.btn-red{background:#DC2626;color:#fff}
+.btn-gray{background:#E2E8F0;color:#0F172A}
+.btn-sm{padding:5px 10px;font-size:.76rem}
 .main{max-width:1400px;margin:0 auto;padding:24px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 2px 12px rgba(30,58,138,.08);border-left:4px solid #4472C4}
-.stat.s1{border-color:#2563EB}.stat.s2{border-color:#D97706}.stat.s3{border-color:#7C3AED}.stat.s4{border-color:#16A34A}
-.stat-lbl{font-size:.7rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.6px}
+.stat{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 2px 12px rgba(30,58,138,.08);border-left:4px solid #ccc}
+.s1{border-color:#2563EB}.s2{border-color:#D97706}.s3{border-color:#7C3AED}.s4{border-color:#16A34A}
+.stat-lbl{font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px}
 .stat-val{font-size:1.9rem;font-weight:700;color:#0F172A;line-height:1.1;margin-top:2px}
-.stat-sub{font-size:.72rem;color:#64748B;margin-top:2px}
+.stat-sub{font-size:.7rem;color:#64748B;margin-top:2px}
 .panel{background:#fff;border-radius:10px;box-shadow:0 2px 12px rgba(30,58,138,.08);overflow:hidden}
-.panel-hdr{background:linear-gradient(135deg,#1F4E78,#2563EB);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
-.panel-hdr h3{font-size:1rem;font-weight:600;color:#fff}
-.panel-hdr-btns{display:flex;gap:8px}
+.phdr{background:linear-gradient(135deg,#1F4E78,#2563EB);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.phdr h3{font-size:1rem;font-weight:600;color:#fff}
 .form-area{padding:20px;border-bottom:1px solid #E2E8F0;background:#EFF6FF;display:none}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-.fg{display:flex;flex-direction:column;gap:3px}.fg.wide{grid-column:span 2}
-.fg label{font-size:.7rem;font-weight:700;color:#64748B;text-transform:uppercase}
-.fg label .r{color:#DC2626}
-.fg input,.fg select,.fg textarea{border:1.5px solid #CBD5E1;border-radius:6px;padding:8px 10px;font-size:.86rem;color:#0F172A;background:#fff;transition:border-color .15s}
+.fg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg.wide{grid-column:span 2}
+.fg label{font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase}
+.r{color:#DC2626}
+.fg input,.fg select,.fg textarea{border:1.5px solid #CBD5E1;border-radius:6px;padding:8px 10px;font-size:.85rem;color:#0F172A;background:#fff}
 .fg input:focus,.fg select:focus,.fg textarea:focus{outline:none;border-color:#2563EB}
 .fg textarea{resize:vertical;min-height:56px}
 .form-btns{display:flex;gap:8px;margin-top:14px;justify-content:flex-end}
-.filter-bar{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid #F1F5F9;flex-wrap:wrap}
-.filter-bar input,.filter-bar select{border:1.5px solid #CBD5E1;border-radius:6px;padding:6px 10px;font-size:.82rem;color:#0F172A;background:#fff}
-.filter-bar input{flex:1;min-width:150px}
+.fbar{display:flex;gap:8px;padding:12px 20px;border-bottom:1px solid #F1F5F9;flex-wrap:wrap}
+.fbar input,.fbar select{border:1.5px solid #CBD5E1;border-radius:6px;padding:6px 10px;font-size:.82rem;background:#fff;color:#0F172A}
+.fbar input{flex:1;min-width:150px}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:.82rem}
-th{padding:9px 12px;text-align:left;font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #E2E8F0;white-space:nowrap;background:#F8FAFC}
+th{padding:9px 12px;text-align:left;font-size:.67rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #E2E8F0;white-space:nowrap;background:#F8FAFC}
 td{padding:9px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle}
 tr:hover td{background:#EFF6FF}
 .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:.7rem;font-weight:700}
-.bp{background:#FEF3C7;color:#92400E}.bi{background:#EDE9FE;color:#5B21B6}.bc{background:#DCFCE7;color:#166534}
+.bp{background:#FEF3C7;color:#92400E}
+.bi{background:#EDE9FE;color:#5B21B6}
+.bc{background:#DCFCE7;color:#166534}
 .act{display:flex;gap:4px}
 .empty{padding:48px 24px;text-align:center;color:#94A3B8;font-size:.88rem}
 .toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:999}
-.toast{padding:10px 16px;border-radius:8px;font-size:.82rem;color:#fff;background:#0F172A;animation:sin .2s ease;pointer-events:none}
-.toast.ok{background:#166534}.toast.err{background:#991B1B}
-@keyframes sin{from{transform:translateX(50px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast{padding:10px 16px;border-radius:8px;font-size:.82rem;color:#fff;background:#0F172A;pointer-events:none}
+.toast.ok{background:#166534}
+.toast.err{background:#991B1B}
 @media(max-width:640px){.stats{grid-template-columns:1fr 1fr}.fg.wide{grid-column:span 1}}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="topbar-brand">&#128197; SH Timesheet</div>
-  <div class="topbar-actions">
+  <div class="brand">&#128197; SH Timesheet</div>
+  <div class="topbar-r">
     <div class="sync"><div class="dot off" id="dot"></div><span id="syncTxt">Connecting...</span></div>
     <button class="btn btn-white btn-sm" onclick="exportExcel()">&#11015; Export</button>
   </div>
@@ -80,14 +82,12 @@ tr:hover td{background:#EFF6FF}
     <div class="stat s4"><div class="stat-lbl">Completed</div><div class="stat-val" id="sDone">0</div><div class="stat-sub">tasks</div></div>
   </div>
   <div class="panel">
-    <div class="panel-hdr">
+    <div class="phdr">
       <h3>&#128203; Monthly Time Sheet</h3>
-      <div class="panel-hdr-btns">
-        <button class="btn btn-green btn-sm" onclick="showForm()">+ Add Entry</button>
-      </div>
+      <button class="btn btn-green btn-sm" onclick="showForm()">+ Add Entry</button>
     </div>
     <div class="form-area" id="formArea">
-      <div class="form-grid">
+      <div class="fg-grid">
         <div class="fg"><label>Date <span class="r">*</span></label><input type="date" id="fDate"/></div>
         <div class="fg"><label>Employee Name <span class="r">*</span></label><input type="text" id="fName" placeholder="Full name"/></div>
         <div class="fg"><label>Employee No. <span class="r">*</span></label><input type="text" id="fEmpNo" placeholder="SH-2101"/></div>
@@ -98,56 +98,61 @@ tr:hover td{background:#EFF6FF}
         <div class="fg"><label>Task Status <span class="r">*</span></label>
           <select id="fStatus"><option value="">-- Select --</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
         </div>
-        <div class="fg"><label>Remarks</label><input type="text" id="fRemarks" placeholder="Optional notes"/></div>
+        <div class="fg"><label>Remarks</label><input type="text" id="fRemarks" placeholder="Optional"/></div>
         <div class="fg"><label>Verified By</label><input type="text" id="fVerifiedBy" placeholder="Optional"/></div>
       </div>
       <div class="form-btns">
-        <button class="btn btn-sm" style="background:#E2E8F0;color:#0F172A" onclick="cancelForm()">Cancel</button>
+        <button class="btn btn-gray btn-sm" onclick="cancelForm()">Cancel</button>
         <button class="btn btn-blue btn-sm" id="saveBtn" onclick="saveEntry()">Save Entry</button>
       </div>
     </div>
-    <div class="filter-bar">
-      <input type="text" id="search" placeholder="Search name, project, description..." oninput="render()"/>
+    <div class="fbar">
+      <input type="text" id="search" placeholder="&#128269; Search name, project, description..." oninput="render()"/>
       <select id="fltStatus" onchange="render()"><option value="">All Statuses</option><option>Pending</option><option>In Progress</option><option>Completed</option></select>
       <select id="fltMonth" onchange="render()"><option value="">All Months</option></select>
     </div>
     <div class="table-wrap">
-      <table><thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Emp No.</th><th>Project</th><th>Description</th><th>Hrs</th><th>Allocated By</th><th>Status</th><th>Remarks</th><th>Verified By</th><th>Actions</th></tr></thead>
-      <tbody id="tbody"></tbody></table>
+      <table>
+        <thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Emp No.</th><th>Project</th><th>Description</th><th>Hrs</th><th>Allocated By</th><th>Status</th><th>Remarks</th><th>Verified By</th><th>Actions</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
       <div class="empty" id="empty">No entries yet. Click <strong>+ Add Entry</strong> to get started.</div>
     </div>
   </div>
 </div>
 <div class="toasts" id="toasts"></div>
 <script>
-// ── Firebase config hardcoded ──
 firebase.initializeApp({
   apiKey:'AIzaSyCfmRxMz5pQptUrCWLE5EWVc2GTfbCmyZA',
   authDomain:'sh-timesheet.firebaseapp.com',
+  databaseURL:'https://sh-timesheet-default-rtdb.asia-southeast1.firebasedatabase.app',
   projectId:'sh-timesheet',
   storageBucket:'sh-timesheet.firebasestorage.app',
   messagingSenderId:'400254422937',
   appId:'1:400254422937:web:625904091041a2e2a90d08'
 });
-var db = firebase.firestore();
+
+var db = firebase.database();
 var entries = [];
 var editId = null;
 
-// ── Firestore live listener ──
-db.collection('timesheet').orderBy('createdAt','asc').onSnapshot(function(snap){
-  entries = snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
-  render(); updateStats();
+// Connect to Realtime Database
+db.ref('timesheet').on('value', function(snap){
+  var data = snap.val();
+  entries = data ? Object.keys(data).map(function(k){return Object.assign({id:k},data[k]);}) : [];
+  entries.sort(function(a,b){return(a.createdAt||0)-(b.createdAt||0);});
+  render();
+  updateStats();
   document.getElementById('dot').className='dot';
   document.getElementById('syncTxt').textContent='Firebase live';
 }, function(err){
   document.getElementById('dot').className='dot off';
-  document.getElementById('syncTxt').textContent='Connection error';
-  toast('Error: '+err.message,'err');
+  document.getElementById('syncTxt').textContent='Error: '+err.code;
+  toast(err.message,'err');
 });
 
-// ── Form ──
 function showForm(){
-  editId=null; clearForm();
+  editId=null;clearForm();
   document.getElementById('fDate').value=new Date().toISOString().split('T')[0];
   document.getElementById('formArea').style.display='block';
   document.getElementById('saveBtn').textContent='Save Entry';
@@ -155,7 +160,7 @@ function showForm(){
 function cancelForm(){document.getElementById('formArea').style.display='none';editId=null;}
 function clearForm(){['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus','fRemarks','fVerifiedBy'].forEach(function(id){document.getElementById(id).value='';});}
 
-async function saveEntry(){
+function saveEntry(){
   var required=['fDate','fName','fEmpNo','fProject','fDesc','fHours','fAllocBy','fStatus'];
   for(var i=0;i<required.length;i++){if(!document.getElementById(required[i]).value.trim()){toast('Please fill all required fields','err');return;}}
   var entry={
@@ -173,9 +178,8 @@ async function saveEntry(){
     updatedAt:Date.now()
   };
   try{
-    if(editId){await db.collection('timesheet').doc(editId).set(entry);}
-    else{await db.collection('timesheet').add(entry);}
-    toast(editId?'Entry updated!':'Entry saved!','ok');
+    if(editId){db.ref('timesheet/'+editId).set(entry);toast('Entry updated!','ok');}
+    else{db.ref('timesheet').push(entry);toast('Entry saved!','ok');}
     cancelForm();
   }catch(e){toast('Save failed: '+e.message,'err');}
 }
@@ -197,23 +201,23 @@ function editEntry(id){
   document.getElementById('saveBtn').textContent='Update Entry';
 }
 
-async function deleteEntry(id){
+function deleteEntry(id){
   if(!confirm('Delete this entry?'))return;
-  try{await db.collection('timesheet').doc(id).delete();toast('Entry deleted','ok');}
-  catch(e){toast('Delete failed: '+e.message,'err');}
+  db.ref('timesheet/'+id).remove()
+    .then(function(){toast('Entry deleted','ok');})
+    .catch(function(e){toast('Delete failed: '+e.message,'err');});
 }
 
-// ── Table ──
 function render(){
   var q=document.getElementById('search').value.toLowerCase();
   var st=document.getElementById('fltStatus').value;
   var mo=document.getElementById('fltMonth').value;
-  var filtered=entries.filter(function(e){
+  var f=entries.filter(function(e){
     return(!q||[e.name,e.project,e.desc,e.empNo].some(function(v){return(v||'').toLowerCase().includes(q);}))
       &&(!st||e.status===st)&&(!mo||(e.date||'').startsWith(mo));
   });
-  document.getElementById('empty').style.display=filtered.length?'none':'block';
-  document.getElementById('tbody').innerHTML=filtered.map(function(e,i){
+  document.getElementById('empty').style.display=f.length?'none':'block';
+  document.getElementById('tbody').innerHTML=f.map(function(e,i){
     var bc=e.status==='Completed'?'bc':e.status==='In Progress'?'bi':'bp';
     return'<tr>'
       +'<td style="color:#94A3B8;font-size:.72rem">'+(i+1)+'</td>'
@@ -228,10 +232,9 @@ function render(){
       +'<td style="color:#64748B;font-size:.78rem">'+(esc(e.remarks)||'—')+'</td>'
       +'<td style="color:#64748B;font-size:.78rem">'+(esc(e.verifiedBy)||'—')+'</td>'
       +'<td><div class="act">'
-      +'<button class="btn btn-sm" style="background:#F1F5F9;color:#0F172A" onclick="editEntry(''+e.id+'')">&#9998;</button>'
-      +'<button class="btn btn-red btn-sm" onclick="deleteEntry(''+e.id+'')">&#128465;</button>'
-      +'</div></td>'
-      +'</tr>';
+      +'<button class="btn btn-gray btn-sm" onclick="editEntry(\''+e.id+'\')">&#9998;</button>'
+      +'<button class="btn btn-red btn-sm" onclick="deleteEntry(\''+e.id+'\')">&#128465;</button>'
+      +'</div></td></tr>';
   }).join('');
 }
 
@@ -253,14 +256,14 @@ function updateStats(){
 function exportExcel(){
   if(!entries.length){toast('No entries to export','err');return;}
   var wb=XLSX.utils.book_new();
-  var data=[['Date','Employee Name','Employee Number','Project No.','Description','Hours','Allocated By','Status','Remarks','Verified By']
-  ].concat(entries.map(function(e){return[e.date,e.name,e.empNo,e.project,e.desc,e.hours,e.allocBy,e.status,e.remarks,e.verifiedBy];}));
+  var data=[['Date','Employee Name','Employee No.','Project No.','Description','Hours','Allocated By','Status','Remarks','Verified By']]
+    .concat(entries.map(function(e){return[e.date,e.name,e.empNo,e.project,e.desc,e.hours,e.allocBy,e.status,e.remarks,e.verifiedBy];}));
   var ws=XLSX.utils.aoa_to_sheet(data);
   ws['!cols']=[12,22,14,16,36,8,20,14,24,16].map(function(w){return{wch:w};});
   XLSX.utils.book_append_sheet(wb,ws,'Time Sheet');
   var now=new Date();
   XLSX.writeFile(wb,'SH_Timesheet_'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+'.xlsx');
-  toast('Exported successfully!','ok');
+  toast('Exported!','ok');
 }
 
 function toast(msg,type){
